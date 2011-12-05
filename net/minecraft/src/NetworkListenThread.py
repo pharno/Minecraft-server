@@ -35,9 +35,11 @@ class NetworkListenThread:
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverSocket.bind((inetaddress,port))
         self.serverSocket.listen(5)
+        self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        #self.serverSocket.setblocking(False)
         self.isListening = True
         self.networkAcceptThread = NetworkAcceptThread(self,"Listen thread",minecraftserver)
-        self.networkAcceptThread.start()
+        self.networkAcceptThread.run()
 
 # 
 #     public void func_35505_a(Socket socket)

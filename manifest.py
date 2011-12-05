@@ -12,11 +12,11 @@ def handler(signum, frame):
     print "stopping"
     mc.stopServer()
 
-#signal.signal(signal.SIGINT, handler)
+signal.signal(signal.SIGINT, handler)
 
 
 try:
-    mc.startServer()
+    mc.run()
 except:
     log.critical(traceback.format_exc())
 finally:

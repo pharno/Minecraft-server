@@ -52,6 +52,9 @@ from net.minecraft.src.PropertyManager import PropertyManager
 #
 
 import socket
+import time
+import traceback
+import inspect
 class MinecraftServer:
 #     implements Runnable, ICommandListener, IServer
 # {
@@ -93,8 +96,6 @@ class MinecraftServer:
         self.playersOnline = [];
         self.commands = []
         #self.entityTracker = new EntityTracker[3];
-#         new ThreadSleepForever(this);
-        self.run()
 #     }
 # 
     def startServer(self):
@@ -137,7 +138,7 @@ class MinecraftServer:
             self.logger.warn("**** FAILED TO BIND TO PORT!");
             self.logger.warn("The exception was: %s" % ioexception);
             self.logger.warn("Perhaps a server is already running on that port?");
-            return false;           
+            return False;           
 
         if( not onlineMode):
             self.logger.warning("**** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!");
@@ -182,7 +183,7 @@ class MinecraftServer:
 #             rconMainThread = new RConThreadMain(this);
 #             rconMainThread.startThread();
 #         }
-#         return true;
+        return True
 #     }
 # 
 #     private void initWorld(ISaveFormat isaveformat, String s, long l)
@@ -295,7 +296,7 @@ class MinecraftServer:
 # 
     def stopServer(self):
         self.logger.info("Stopping server")
-
+        self.serverRunning = False
 
         self.networkServer.shutdown()
 #     private void stopServer()
@@ -322,43 +323,36 @@ class MinecraftServer:
 #     }
 # 
     def run(self):
+#        self.logger.info("I got called by {}".format(inspect.stack()))
         self.logger.info("running")
-
-#     {
-#         try
-#         {
-#             if(startServer())
-#             {
-#                 long l = System.currentTimeMillis();
-#                 long l1 = 0L;
-#                 while(serverRunning) 
-#                 {
-#                     long l2 = System.currentTimeMillis();
-#                     long l3 = l2 - l;
-#                     if(l3 > 2000L)
-#                     {
-#                         logger.warning("Can't keep up! Did the system time change, or is the server overloaded?");
-#                         l3 = 2000L;
-#                     }
-#                     if(l3 < 0L)
-#                     {
-#                         logger.warning("Time ran backwards! Did the system time change?");
-#                         l3 = 0L;
-#                     }
-#                     l1 += l3;
-#                     l = l2;
+        try:
+            if self.startServer():
+                self.logger.info("after startserver")
+                curt = time.clock()
+                l1 = 0
+                while self.serverRunning:
+                    l2 = time.clock()
+                    l3 = l2- curt
+                    if l3 > 0.2:
+                        self.logger.warn("Can't keep up! Did the system time change, or is the server overloaded?")
+                        l3 = 0.2
+                    elif l3 < 0:
+                        self.logger.warn("Time ran backwards! Did the system time change?")
+                        l3 = 0
+                    l1 += l3
+                    curt = l2
 #                     if(worldMngr[0].isAllPlayersFullyAsleep())
 #                     {
 #                         doTick();
 #                         l1 = 0L;
 #                     } else
 #                     {
-#                         while(l1 > 50L) 
-#                         {
-#                             l1 -= 50L;
-#                             doTick();
-#                         }
+                    while l1 > 0.005:
+                        l1 -= 0.005
+                        self.doTick()
+
 #                     }
+                    time.sleep(0.01)
 #                     Thread.sleep(1L);
 #                 }
 #             } else
@@ -377,6 +371,8 @@ class MinecraftServer:
 #                 }
 #             }
 #         }
+        except Exception as ex:
+            self.logger.critical(traceback.format_exc())
 #         catch(Throwable throwable1)
 #         {
 #             throwable1.printStackTrace();
@@ -411,8 +407,10 @@ class MinecraftServer:
 #             }
 #         }
 #     }
-# 
-#     private void doTick()
+
+    def doTick(self):
+        self.logger.info("ticking")
+
 #     {
 #         long l = System.nanoTime();
 #         ArrayList arraylist = new ArrayList();

@@ -15,31 +15,29 @@
 
 import threading
 import time
-class NetworkAcceptThread(threading.Thread):
+from net.minecraft.util.logger import logger
+from net.minecraft.util.make_tasklet import make_tasklet
+
+@make_tasklet
+class NetworkAcceptThread():
     def __init__(self,listenthread, name, minecraftserver):
-        threading.Thread.__init__(self)
         self.netWorkListener = listenthread
         self.mcServer = minecraftserver
 
     def run(self):
-        while self.netWorkListener.isListening == True:
+        while True:
             try:
-                sock,inetaddress = self.netWorkListener.ServerSocket.accept()
+                sock,inetaddress = self.netWorkListener.serverSocket.accept()
+                logger.info("got connection: %s:%s" % inetaddress)
                 if inetaddress in self.netWorkListener.sockets and ((time.clock() - self.netWorkListener.sockets[inetaddress]) < 0.500):
                     self.netWorkListener.sockets[inetaddress] = time.clock()
                     sock.close()
-                    continue
+                    logger.info("closing connection: %s:%s" % inetaddress)
+                    return
                 self.netWorkListener.sockets[inetaddress] = time.clock()
-#                 NetLoginHandler netloginhandler = new NetLoginHandler(mcServer, socket, (new StringBuilder()).append("Connection #").append(NetworkListenThread.func_712_b(netWorkListener)).toString());
-#                 NetworkListenThread.func_716_a(netWorkListener, netloginhandler);
-#             }
-            except IOError:
-                self.logger.critical("%s" % (fil,exception))
-
-#             catch(IOException ioexception)
-#             {
-#                 ioexception.printStackTrace();
-#             }
-#         } while(true);
-#     }
-# }
+    #                 NetLoginHandler netloginhandler = new NetLoginHandler(mcServer, socket, (new StringBuilder()).append("Connection #").append(NetworkListenThread.func_712_b(netWorkListener)).toString());
+    #                 NetworkListenThread.func_716_a(netWorkListener, netloginhandler);
+    #             }
+            except IOError as exception:
+                logger.info("%s" % (exception))
+                pass
